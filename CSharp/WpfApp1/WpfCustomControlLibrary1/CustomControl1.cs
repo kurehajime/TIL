@@ -60,7 +60,7 @@ namespace WpfCustomControlLibrary1
 
         // Using a DependencyProperty as the backing store for Value.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty ValueProperty =
-            DependencyProperty.Register("Value", typeof(string), typeof(CustomControl1), new PropertyMetadata(""));
+            DependencyProperty.Register("Value", typeof(string), typeof(CustomControl1), new PropertyMetadata("", ValuePropertyChanged));
 
         public override void OnApplyTemplate()
         {
