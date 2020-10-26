@@ -5,3 +5,5 @@ ENV LANG C.UTF-8
 # 作業ディレクトリの作成、設定
 RUN mkdir /work
 ADD . /work
+
+RUN bundle install
