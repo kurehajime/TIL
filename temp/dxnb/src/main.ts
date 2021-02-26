@@ -1,4 +1,6 @@
 let lastRender = 0
+const MAX_ROW_COUNT = 10
+const MAX_COLUMN_COUNT = 5
 
 class Game {
     private isRunning: boolean = false
@@ -25,15 +27,14 @@ class Game {
 
 
     private draw() {
-
         this.stage.update()
     }
 
 
 
     private initDraw() {
-        for (let r = 0; r < 10; r++) {
-            for (let c = 0; c < 5; c++) {
+        for (let r = 0; r < MAX_ROW_COUNT; r++) {
+            for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
                 let color: Color = Math.floor(Math.random() * 3)
                 let suit: Suit = Math.floor(Math.random() * 4)
                 let cell = new Cell(suit, color)
@@ -48,29 +49,68 @@ class Game {
             }
         }
 
-
-
-        // Stageの描画を更新します
         this.stage.update()
+    }
+
+    private getCells():Cell[][]{
+        let cells : Cell[][] =[]
+        for (let r = 0; r < MAX_ROW_COUNT; r++) {
+            for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
+                let cell = this.stage.children.find(x=>  x instanceof Cell && x.Row === r && x.Column === c) as Cell
+                if (!cells[r]){
+                    cells[r] = []
+                }
+                cells[r][c] = cell
+            }       
+        }
+        return cells
+    }
+
+    private check(){
+        let cells = this.getCells()
+        for (let r = 0; r < MAX_ROW_COUNT; r++) {
+            let suitBool =  cells[r].every(x=>{ return x.Suit === cells[r][0].Suit })
+            let colorBool =  cells[r].every(x=>{return x.Color === cells[r][0].Color })
+            if(suitBool || colorBool){
+                cells[r].forEach(x => {
+                    x.IsLive = false
+                    x.Draw()
+                })
+            }
+        }
     }
 
     private onClick(e:MouseEvent){
         let target = e.currentTarget as Cell
+        this.stage.children.forEach(x => { 
+            if(x instanceof Cell){
+                x.IsHold = false
+                x.Draw()
+            }
+        } )
         if(this.hold){
             if(this.hold !== target){
-                let color = target.Color
-                let suit = target.Suit
-                target.Color =  this.hold.Color
-                target.Suit =  this.hold.Suit
-                this.hold.Color = color
-                this.hold.Suit = suit
-                
-                this.hold.Draw()
-                target.Draw()
+                if(this.hold.Color === target.Color ||this.hold.Suit === target.Suit ){
+                    let color = target.Color
+                    let suit = target.Suit
+                    target.Color =  this.hold.Color
+                    target.Suit =  this.hold.Suit
+                    this.hold.Color = color
+                    this.hold.Suit = suit
+                    
+                    this.check()
+                    
+                    this.hold.Draw()
+                    target.Draw()
+                }
             }
+            this.hold.IsHold = false
+            this.hold.Draw()
             this.hold = null
         }else{
             this.hold = target
+            this.hold.IsHold = true
+            this.hold.Draw()
         }
     }
 
@@ -81,6 +121,8 @@ class Cell extends createjs.Container {
     public Column: number
     public Suit: Suit
     public Color: Color
+    public IsLive :boolean = true
+    public IsHold : boolean = false
 
 
     public constructor(suit: Suit, color: Color) {
@@ -94,6 +136,9 @@ class Cell extends createjs.Container {
         let suit: string
         let color: string
         this.removeAllChildren()
+        if(!this.IsLive){
+            return
+        }
 
         switch (this.Suit) {
             case Suit.North:
@@ -127,10 +172,16 @@ class Cell extends createjs.Container {
         let shape1 = new createjs.Shape()
         shape1.graphics.beginFill(color)
         shape1.graphics.drawRoundRect(5, 5, 45, 45, 5)
+        if(this.IsHold){
+            var shadow = new createjs.Shadow("#ffff00",0,0,15);
+            shape1.shadow=shadow;
+        }
+
         let word = new createjs.Text(suit, "24px serif", "White");
         word.textAlign = "center";
         word.x = 27
         word.y = 15
+
         this.addChild(shape1)
         this.addChild(word)
     }
