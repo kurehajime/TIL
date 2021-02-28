@@ -1,12 +1,13 @@
-import {  Suit,Color ,MAX_ROW_COUNT,MAX_COLUMN_COUNT } from "./params";
+import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT } from "./params";
 
 export class Cell extends createjs.Container {
     public Row: number
     public Column: number
     public Suit: Suit
     public Color: Color
-    public IsLive :boolean = true
-    public IsHold : boolean = false
+    public State: State = State.Live
+    public IsHold: boolean = false
+    public Life = 0
 
     public constructor(suit: Suit, color: Color) {
         super()
@@ -19,7 +20,7 @@ export class Cell extends createjs.Container {
         let suit: string
         let color: string
         this.removeAllChildren()
-        if(!this.IsLive){
+        if (this.State === State.Delete) {
             return
         }
 
@@ -55,23 +56,28 @@ export class Cell extends createjs.Container {
         let shape1 = new createjs.Shape()
         shape1.graphics.beginFill(color)
         shape1.graphics.drawRoundRect(5, 5, 45, 45, 5)
-        if(this.IsHold){
-            var shadow = new createjs.Shadow("#ffff00",0,0,15);
-            shape1.shadow=shadow;
+        if (this.IsHold) {
+            var shadow = new createjs.Shadow("#ffff00", 0, 0, 15);
+            shape1.shadow = shadow;
         }
 
         let word = new createjs.Text(suit, "24px serif", "White");
         word.textAlign = "center";
         word.x = 27
         word.y = 15
+        if (this.State === State.Flash) {
+            this.alpha = 0.7
+        } else {
+            this.alpha = 1
+        }
 
         this.addChild(shape1)
         this.addChild(word)
     }
-    public Override(cell :Cell){
+    public Override(cell: Cell) {
         this.Suit = cell.Suit
         this.Color = cell.Color
-        this.IsLive  = cell.IsLive
-        this.IsHold  = cell.IsHold
+        this.State = cell.State
+        this.IsHold = cell.IsHold
     }
 }
