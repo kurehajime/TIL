@@ -1,16 +1,21 @@
 import {
     Suit, Color, State
-    , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN
+    , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN, FRAME_TOP, FRAME_LEFT
 } from "./params";
 import { Cell } from "./cell";
+import { Frame } from "./frame";
+import { Shadow } from "./shadow";
 
 export class Game {
     private stage: createjs.Stage
     private hold: Cell = null
     private progress = 0
+    private progressBySpeed = 0
     private step = 0
     private stepIncrement: boolean = false
+    private stopTime = 0
     private field: createjs.Container
+    private shadow: Shadow
 
     constructor() {
         this.stage = new createjs.Stage("canvas")
@@ -26,21 +31,32 @@ export class Game {
 
     private handleTick(e: createjs.TickerEvent) {
         this.update(e)
-        this.draw()
+        this.draw(e)
     }
 
     private update(e: createjs.TickerEvent) {
-        this.progress = Math.round(e.time / PROGRESS_SPAN)
-        this.stepIncrement = (this.step !== Math.floor(this.progress / STEP_SPAN))
-        this.step = Math.floor(this.progress / STEP_SPAN)
+        let delta = Math.max(e.delta - this.stopTime, 0)
+        this.stopTime = Math.max(this.stopTime - e.delta, 0)
+        this.progress = this.progress + Math.round(delta)
+        this.progressBySpeed = Math.round(this.progress / PROGRESS_SPAN)
+
+        this.stepIncrement = (this.step !== Math.floor(this.progressBySpeed / STEP_SPAN))
+        this.step = Math.floor(this.progressBySpeed / STEP_SPAN)
         if (this.stepIncrement) {
             this.up()
         }
         this.decrementLife()
+
+        if (this.getTopRowNumber() === 0) {
+            console.log("Game Over")
+        }
     }
 
-    private draw() {
-        this.field.y = - (this.progress % STEP_SPAN)
+    private draw(e: createjs.TickerEvent) {
+        this.field.y = FRAME_TOP - (this.progressBySpeed % STEP_SPAN)
+        if (this.shadow.IsLive) {
+            this.shadow.Hue = this.progress
+        }
         this.stage.update()
     }
 
@@ -58,6 +74,7 @@ export class Game {
                     cells[r].forEach(x => {
                         x.State = State.Flash
                         x.Life = 20
+                        this.stopTime += 750
                     })
                 }
             }
@@ -80,8 +97,8 @@ export class Game {
                 }
             }
         }
-        this.drawAll()
         this.shake()
+        this.check()
     }
 
     private up() {
@@ -122,6 +139,16 @@ export class Game {
                     this.hold.Color = color
                     this.hold.Suit = suit
 
+                    // 影
+                    this.shadow.IsLive = true
+                    this.shadow.x = this.hold.x
+                    this.shadow.y = this.hold.y
+                    this.shadow.Hue = 0
+                    this.shadow.Life = 20
+                    createjs.Tween.get(this.shadow)
+                        .to({ x: target.x, y: target.y }, 100)
+
+
                     this.check()
                 }
             }
@@ -135,13 +162,13 @@ export class Game {
     }
 
     private shake() {
-        createjs.Tween.get(this.stage)
-            .to({ x: 2, y: 1, }, 50)
-            .to({ x: -1, y: -2, }, 50)
-            .to({ x: -3, y: 0, }, 50)
-            .to({ x: 0, y: 3, }, 50)
-            .to({ x: 1, y: -1, }, 50)
-            .to({ x: 0, y: 0, }, 50)
+        createjs.Tween.get(this.field)
+            .to({ x: FRAME_LEFT + 1, y: FRAME_TOP + 1, }, 50)
+            .to({ x: FRAME_LEFT - 1, y: FRAME_TOP - 1, }, 50)
+            .to({ x: FRAME_LEFT + 1, y: FRAME_TOP + 0, }, 50)
+            .to({ x: FRAME_LEFT + 0, y: FRAME_TOP + 1, }, 50)
+            .to({ x: FRAME_LEFT - 1, y: FRAME_TOP - 1, }, 50)
+            .to({ x: FRAME_LEFT + 0, y: FRAME_TOP + 0, }, 50)
     }
 
     //#endregion
@@ -201,6 +228,9 @@ export class Game {
                 }
             }
         });
+        if (this.shadow.IsLive) {
+            this.shadow.Life--;
+        }
         if (def) {
             this.defrag()
         }
@@ -213,6 +243,8 @@ export class Game {
         let field = new createjs.Container()
         field.name = "field"
         this.field = field
+        this.field.x = FRAME_LEFT
+        this.field.y = FRAME_TOP
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
             for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
                 let color: Color = Math.floor(Math.random() * 3)
@@ -231,7 +263,11 @@ export class Game {
                 field.addChild(cell)
             }
         }
+        this.shadow = new Shadow()
+        field.addChild(this.shadow)
+
         this.stage.addChild(field)
+        this.stage.addChild(new Frame())
         this.drawAll()
         this.stage.update()
     }
