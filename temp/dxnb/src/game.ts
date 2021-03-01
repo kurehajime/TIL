@@ -5,6 +5,7 @@ import {
 import { Cell } from "./cell";
 import { Frame } from "./frame";
 import { Shadow } from "./shadow";
+import { Cover } from "./cover";
 
 export class Game {
     private stage: createjs.Stage
@@ -16,15 +17,30 @@ export class Game {
     private stopTime = 0
     private field: createjs.Container
     private shadow: Shadow
+    private cover: Cover
+
+    private soundSource = [
+        { src: "./swap.mp3", id: "swap" },
+        { src: "./break.mp3", id: "break" },
+    ];
+    private sounds: { [name: string]: createjs.AbstractSoundInstance } = {}
 
     constructor() {
         this.stage = new createjs.Stage("canvas")
     }
     public Start() {
         this.initDraw()
+        createjs.Sound.addEventListener("fileload", (event: any) => {
+            this.sounds[event.id] = createjs.Sound.createInstance(event.id);
+        });
+        createjs.Sound.registerSounds(this.soundSource);
+        this.cover.addEventListener("mousedown", (e: MouseEvent) => {
+            createjs.Ticker.timingMode = createjs.Ticker.RAF;
+            createjs.Ticker.addEventListener("tick", (e: createjs.TickerEvent) => { this.handleTick(e) });
+            this.cover.UnDraw()
+            this.cover.removeAllEventListeners()
+        });
 
-        createjs.Ticker.timingMode = createjs.Ticker.RAF;
-        createjs.Ticker.addEventListener("tick", (e: createjs.TickerEvent) => { this.handleTick(e) });
     }
 
     //#region Tick
@@ -97,6 +113,7 @@ export class Game {
                 }
             }
         }
+        this.sounds["break"]?.play()
         this.shake()
         this.check()
     }
@@ -150,6 +167,7 @@ export class Game {
 
 
                     this.check()
+                    this.sounds["swap"]?.play()
                 }
             }
             this.hold.IsHold = false
@@ -266,8 +284,11 @@ export class Game {
         this.shadow = new Shadow()
         field.addChild(this.shadow)
 
+        this.cover = new Cover()
+
         this.stage.addChild(field)
         this.stage.addChild(new Frame())
+        this.stage.addChild(this.cover)
         this.drawAll()
         this.stage.update()
     }
