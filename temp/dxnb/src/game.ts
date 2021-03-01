@@ -1,11 +1,12 @@
 import {
     Suit, Color, State
-    , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN, FRAME_TOP, FRAME_LEFT
+    , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN, FRAME_TOP, FRAME_LEFT, END_OF_TIME
 } from "./params";
 import { Cell } from "./cell";
 import { Frame } from "./frame";
 import { Shadow } from "./shadow";
 import { Cover } from "./cover";
+import { Score } from "./score";
 
 export class Game {
     private stage: createjs.Stage
@@ -18,8 +19,14 @@ export class Game {
     private field: createjs.Container
     private shadow: Shadow
     private cover: Cover
+    private score: Score
+    private point: number = 0
+    private isGameOver: boolean = false
+    private startTime: number = 0
+
 
     private soundSource = [
+        { src: "./bgm.m4a", id: "bgm" },
         { src: "./swap.mp3", id: "swap" },
         { src: "./break.mp3", id: "break" },
     ];
@@ -34,9 +41,14 @@ export class Game {
             this.sounds[event.id] = createjs.Sound.createInstance(event.id);
         });
         createjs.Sound.registerSounds(this.soundSource);
+
+
         this.cover.addEventListener("mousedown", (e: MouseEvent) => {
             createjs.Ticker.timingMode = createjs.Ticker.RAF;
             createjs.Ticker.addEventListener("tick", (e: createjs.TickerEvent) => { this.handleTick(e) });
+            this.sounds["bgm"]?.setLoop(-1)
+            this.sounds["bgm"]?.setVolume(0.3)
+            this.sounds["bgm"]?.play()
             this.cover.UnDraw()
             this.cover.removeAllEventListeners()
         });
@@ -51,20 +63,32 @@ export class Game {
     }
 
     private update(e: createjs.TickerEvent) {
-        let delta = Math.max(e.delta - this.stopTime, 0)
-        this.stopTime = Math.max(this.stopTime - e.delta, 0)
-        this.progress = this.progress + Math.round(delta)
-        this.progressBySpeed = Math.round(this.progress / PROGRESS_SPAN)
-
-        this.stepIncrement = (this.step !== Math.floor(this.progressBySpeed / STEP_SPAN))
-        this.step = Math.floor(this.progressBySpeed / STEP_SPAN)
-        if (this.stepIncrement) {
-            this.up()
+        if (this.startTime === 0) {
+            this.startTime = e.time
         }
-        this.decrementLife()
+        let time = e.time - this.startTime
+        let progressPer = time / END_OF_TIME
+        if (progressPer > 1) {
+            this.isGameOver = true
+        }
+        if (!this.isGameOver) {
+            let delta = Math.max(e.delta - this.stopTime, 0)
+            let progress_span = PROGRESS_SPAN - (200 * progressPer)
+            this.stopTime = Math.max(this.stopTime - e.delta, 0)
+            this.progress = this.progress + Math.round(delta)
+            this.progressBySpeed = Math.round(this.progress / progress_span)
+            console.log(progress_span)
 
-        if (this.getTopRowNumber() === 0) {
-            console.log("Game Over")
+            this.stepIncrement = (this.step !== Math.floor(this.progressBySpeed / STEP_SPAN))
+            this.step = Math.floor(this.progressBySpeed / STEP_SPAN)
+            if (this.stepIncrement) {
+                this.up()
+            }
+            this.decrementLife()
+
+            if (this.getTopRowNumber() === 0) {
+                this.gameOver()
+            }
         }
     }
 
@@ -111,6 +135,7 @@ export class Game {
                 for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
                     cells[0][c].State = State.Delete
                 }
+                this.point++;
             }
         }
         this.sounds["break"]?.play()
@@ -187,6 +212,12 @@ export class Game {
             .to({ x: FRAME_LEFT + 0, y: FRAME_TOP + 1, }, 50)
             .to({ x: FRAME_LEFT - 1, y: FRAME_TOP - 1, }, 50)
             .to({ x: FRAME_LEFT + 0, y: FRAME_TOP + 0, }, 50)
+    }
+
+    private gameOver() {
+        this.isGameOver = true
+        this.sounds["bgm"]?.stop()
+        this.score.Draw(this.point)
     }
 
     //#endregion
@@ -285,10 +316,11 @@ export class Game {
         field.addChild(this.shadow)
 
         this.cover = new Cover()
-
+        this.score = new Score()
         this.stage.addChild(field)
         this.stage.addChild(new Frame())
         this.stage.addChild(this.cover)
+        this.stage.addChild(this.score)
         this.drawAll()
         this.stage.update()
     }
@@ -305,7 +337,16 @@ export class Game {
 
     private onClick(e: MouseEvent) {
         let target = e.currentTarget as Cell
-        this.swap(target)
+        if (!this.isGameOver) {
+            if (this.sounds["bgm"]?.getPosition() === 0) {
+                this.sounds["bgm"]?.setVolume(0.3)
+                this.sounds["bgm"]?.setLoop(-1)
+                this.sounds["bgm"]?.play()
+            }
+            this.swap(target)
+        }
+
+
     }
 
     //#endregion
