@@ -3,16 +3,6 @@ export class Shadow extends createjs.Container {
     private _isLive = false
     private shape: createjs.Shape
     private _hue = 0
-    private _life = 0
-    public set Life(value: number) {
-        this._life = value;
-        if (this._life <= 0) {
-            this.IsLive = false
-        }
-    }
-    public get Life() {
-        return this._life
-    }
 
     public set IsLive(value: boolean) {
         this._isLive = value;

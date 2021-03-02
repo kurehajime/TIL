@@ -28,3 +28,7 @@ export const FRAME_TOP = 25
 export const FRAME_LEFT = 25
 export const END_OF_TIME = 60 * 1000
 
+export const COLOR_RED = "DarkRed"
+export const COLOR_GREEN = "DarkGreen"
+export const COLOR_BLUE = "DarkBlue"
+

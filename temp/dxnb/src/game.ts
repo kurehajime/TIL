@@ -8,10 +8,12 @@ import { Shadow } from "./shadow";
 import { Cover } from "./cover";
 import { Score } from "./score";
 import { Utils } from "./utils";
+import { EventManager } from "./eventManager";
 
 export class Game {
     private stage: createjs.Stage
     private hold: Cell = null
+    private eventManager: EventManager = new EventManager()
     private progress = 0
     private progressBySpeed = 0
     private step = 0
@@ -38,14 +40,17 @@ export class Game {
     constructor() {
         this.stage = new createjs.Stage("canvas")
     }
+
     public Start() {
         this.initDraw()
+
+        // 音声読み込み
         createjs.Sound.addEventListener("fileload", (event: any) => {
             this.sounds[event.id] = createjs.Sound.createInstance(event.id);
         });
         createjs.Sound.registerSounds(this.soundSource);
 
-
+        // 最初のマウスクリックでTickを起動
         this.cover.addEventListener("mousedown", (e: MouseEvent) => {
             createjs.Ticker.timingMode = createjs.Ticker.RAF;
             createjs.Ticker.addEventListener("tick", (e: createjs.TickerEvent) => { this.handleTick(e) });
@@ -62,33 +67,38 @@ export class Game {
 
     private handleTick(e: createjs.TickerEvent) {
         this.update(e)
+        this.eventManager.Tick(e.time)
         this.draw(e)
     }
 
     private update(e: createjs.TickerEvent) {
+
+        // ゲーム開始からの時間
         if (this.startTime === 0) {
             this.startTime = e.time
         }
         let time = e.time - this.startTime
         let progressPer = time / END_OF_TIME
+
+        // ゲームオーバー判定
         if (progressPer > 1) {
             this.gameOver()
         }
+
+
         if (!this.isGameOver) {
             let delta = Math.max(e.delta - this.stopTime, 0)
             let progress_span = PROGRESS_SPAN - (200 * progressPer)
             this.stopTime = Math.max(this.stopTime - e.delta, 0)
             this.progress = this.progress + Math.round(delta)
             this.progressBySpeed = Math.round(this.progress / progress_span)
-            console.log(progress_span)
-
             this.stepIncrement = (this.step !== Math.floor(this.progressBySpeed / STEP_SPAN))
             this.step = Math.floor(this.progressBySpeed / STEP_SPAN)
             if (this.stepIncrement) {
                 this.up()
             }
-            this.decrementLife()
 
+            // ゲームオーバー判定
             if (Utils.GetTopRowNumber(this.getCells()) === 0) {
                 this.gameOver()
             }
@@ -96,6 +106,7 @@ export class Game {
     }
 
     private draw(e: createjs.TickerEvent) {
+        // せり上げる
         this.field.y = FRAME_TOP - (this.progressBySpeed % STEP_SPAN)
         if (this.shadow.IsLive) {
             this.shadow.Hue = this.progress
@@ -107,6 +118,7 @@ export class Game {
 
     //#region GameControl
 
+    // 消去判定
     private check() {
         let cells = this.getCells()
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
@@ -116,15 +128,36 @@ export class Game {
                 if (cells[r][0].State === State.Live) {
                     cells[r].forEach(x => {
                         x.State = State.Flash
-                        x.Life = 20
-                        this.stopTime += 750
                     })
+                    this.stopTime += 4000
+                    let row = cells[r]
+                    this.eventManager.SetEvent(500, () => {
+                        row.forEach(x => {
+                            x.State = State.Delete
+                        })
+                        this.defrag()
+                    })
+
+                    //ボーナスブロックに変える 
+                    if (suitBool && this.bonusSuit === suit) {
+                        this.changeBlock(this.bonusSuit, null)
+                        this.eventManager.SetEvent(500, () => {
+                            this.check()
+                        })
+                    }
+                    if (colorBool && this.bonusColor === color) {
+                        this.eventManager.SetEvent(500, () => {
+                            this.check()
+                        })
+                    }
                 }
+
             }
         }
         this.drawAll()
     }
 
+    // 削除可能ブロックを消して詰める
     private defrag() {
         let cells = this.getCells()
         for (let r1 = Utils.GetTopRowNumber(this.getCells()); r1 < MAX_ROW_COUNT; r1++) {
@@ -143,9 +176,25 @@ export class Game {
         }
         this.sounds["break"]?.play()
         Utils.Shake(this.field)
-        this.check()
+        this.drawAll()
     }
 
+    // ボーナスブロックに変換
+    private changeBlock(suit: Suit, color: Color) {
+        let cells = Utils.GetCellArray(this.getCells())
+        if (suit) {
+            for (const cell of cells) {
+                cell.Suit = Suit.Wild
+            }
+        }
+        if (suit) {
+            for (const cell of cells) {
+                cell.Color = Color.Rainbow
+            }
+        }
+    }
+
+    // ブロックの繰り上げ
     private up() {
         let cells = this.getCells()
         for (let r = 0; r < MAX_ROW_COUNT - 1; r++) {
@@ -164,6 +213,7 @@ export class Game {
         this.drawAll()
     }
 
+    // ブロックの入れ替え
     private swap(target: Cell) {
         this.field.children.forEach(x => {
             if (x instanceof Cell) {
@@ -189,7 +239,9 @@ export class Game {
                     this.shadow.x = this.hold.x
                     this.shadow.y = this.hold.y
                     this.shadow.Hue = 0
-                    this.shadow.Life = 20
+                    this.eventManager.SetEvent(300, () => {
+                        this.shadow.IsLive = false
+                    })
                     createjs.Tween.get(this.shadow)
                         .to({ x: target.x, y: target.y }, 100)
 
@@ -207,7 +259,7 @@ export class Game {
         this.drawAll()
     }
 
-
+    // ゲームオーバー
     private gameOver() {
         this.isGameOver = true
         this.sounds["bgm"]?.stop()
@@ -232,28 +284,11 @@ export class Game {
         return cells
     }
 
-    private decrementLife() {
-        let def = false
-        Utils.GetCellArray(this.getCells()).forEach(cell => {
-            if (cell.State === State.Flash) {
-                cell.Life--;
-                if (cell.Life <= 0) {
-                    cell.State = State.Delete
-                    def = true
-                }
-            }
-        });
-        if (this.shadow.IsLive) {
-            this.shadow.Life--;
-        }
-        if (def) {
-            this.defrag()
-        }
-    }
     //#endregion
 
     //#region Draw
 
+    // 初期描画
     private initDraw() {
         let field = new createjs.Container()
         field.name = "field"

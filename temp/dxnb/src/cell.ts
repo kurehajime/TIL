@@ -1,4 +1,4 @@
-import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT } from "./params";
+import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT, COLOR_RED, COLOR_GREEN, COLOR_BLUE } from "./params";
 
 export class Cell extends createjs.Container {
     public Row: number
@@ -45,13 +45,13 @@ export class Cell extends createjs.Container {
         }
         switch (this.Color) {
             case Color.Red:
-                color = "DarkRed"
+                color = COLOR_RED
                 break;
             case Color.Green:
-                color = "DarkGreen"
+                color = COLOR_GREEN
                 break;
             case Color.Blue:
-                color = "DarkBlue"
+                color = COLOR_BLUE
                 break;
             case Color.Rainbow:
                 color = "Black"
