@@ -51,6 +51,39 @@ export class Utils {
         return cellArray
     }
 
+    // ボーナスブロックに変換
+    public static ChangeBlock(cells: Cell[][], suit: Suit, color: Color) {
+        let cellArray = Utils.GetCellArray(cells)
+        if (suit) {
+            for (const cell of cellArray) {
+                cell.Suit = Suit.Wild
+            }
+        }
+        if (suit) {
+            for (const cell of cellArray) {
+                cell.Color = Color.Rainbow
+            }
+        }
+    }
+    public static Defrag(cells: Cell[][]): number {
+        let point = 0
+        for (let r1 = Utils.GetTopRowNumber(cells); r1 < MAX_ROW_COUNT; r1++) {
+            if (cells[r1][0].State === State.Delete) {
+                for (let r2 = r1; r2 > 0; r2--) {
+                    for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
+                        cells[r2][c].Override(cells[r2 - 1][c])
+                    }
+                }
+
+                for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
+                    cells[0][c].State = State.Delete
+                }
+                point++;
+            }
+        }
+        return point
+    }
+
     // 要素を揺らす
     public static Shake(con: createjs.Container) {
         createjs.Tween.get(con)

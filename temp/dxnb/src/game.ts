@@ -140,7 +140,7 @@ export class Game {
 
                     //ボーナスブロックに変える 
                     if (suitBool && this.bonusSuit === suit) {
-                        this.changeBlock(this.bonusSuit, null)
+                        Utils.ChangeBlock(this.getCells(), this.bonusSuit, null)
                         this.eventManager.SetEvent(500, () => {
                             this.check()
                         })
@@ -159,38 +159,12 @@ export class Game {
 
     // 削除可能ブロックを消して詰める
     private defrag() {
-        let cells = this.getCells()
-        for (let r1 = Utils.GetTopRowNumber(this.getCells()); r1 < MAX_ROW_COUNT; r1++) {
-            if (cells[r1][0].State === State.Delete) {
-                for (let r2 = r1; r2 > 0; r2--) {
-                    for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-                        cells[r2][c].Override(cells[r2 - 1][c])
-                    }
-                }
-
-                for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-                    cells[0][c].State = State.Delete
-                }
-                this.point++;
-            }
-        }
-        this.sounds["break"]?.play()
-        Utils.Shake(this.field)
-        this.drawAll()
-    }
-
-    // ボーナスブロックに変換
-    private changeBlock(suit: Suit, color: Color) {
-        let cells = Utils.GetCellArray(this.getCells())
-        if (suit) {
-            for (const cell of cells) {
-                cell.Suit = Suit.Wild
-            }
-        }
-        if (suit) {
-            for (const cell of cells) {
-                cell.Color = Color.Rainbow
-            }
+        let point = Utils.Defrag(this.getCells())
+        if (point > 0) {
+            this.point += point
+            this.sounds["break"]?.play()
+            Utils.Shake(this.field)
+            this.drawAll()
         }
     }
 
