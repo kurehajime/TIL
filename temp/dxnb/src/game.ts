@@ -69,7 +69,7 @@ export class Game {
         let time = e.time - this.startTime
         let progressPer = time / END_OF_TIME
         if (progressPer > 1) {
-            this.isGameOver = true
+            this.gameOver()
         }
         if (!this.isGameOver) {
             let delta = Math.max(e.delta - this.stopTime, 0)
