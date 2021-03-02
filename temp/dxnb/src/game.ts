@@ -7,6 +7,7 @@ import { Frame } from "./frame";
 import { Shadow } from "./shadow";
 import { Cover } from "./cover";
 import { Score } from "./score";
+import { Utils } from "./utils";
 
 export class Game {
     private stage: createjs.Stage
@@ -23,6 +24,8 @@ export class Game {
     private point: number = 0
     private isGameOver: boolean = false
     private startTime: number = 0
+    private bonusSuit: Suit = null
+    private bonusColor: Color = null
 
 
     private soundSource = [
@@ -86,7 +89,7 @@ export class Game {
             }
             this.decrementLife()
 
-            if (this.getTopRowNumber() === 0) {
+            if (Utils.GetTopRowNumber(this.getCells()) === 0) {
                 this.gameOver()
             }
         }
@@ -107,8 +110,8 @@ export class Game {
     private check() {
         let cells = this.getCells()
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
-            let suitBool = cells[r].every(x => { return x.Suit === cells[r][0].Suit })
-            let colorBool = cells[r].every(x => { return x.Color === cells[r][0].Color })
+            let [suitBool, suit] = Utils.CheckSuit(cells[r])
+            let [colorBool, color] = Utils.CheckColor(cells[r])
             if (suitBool || colorBool) {
                 if (cells[r][0].State === State.Live) {
                     cells[r].forEach(x => {
@@ -124,7 +127,7 @@ export class Game {
 
     private defrag() {
         let cells = this.getCells()
-        for (let r1 = this.getTopRowNumber(); r1 < MAX_ROW_COUNT; r1++) {
+        for (let r1 = Utils.GetTopRowNumber(this.getCells()); r1 < MAX_ROW_COUNT; r1++) {
             if (cells[r1][0].State === State.Delete) {
                 for (let r2 = r1; r2 > 0; r2--) {
                     for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
@@ -139,7 +142,7 @@ export class Game {
             }
         }
         this.sounds["break"]?.play()
-        this.shake()
+        Utils.Shake(this.field)
         this.check()
     }
 
@@ -150,7 +153,7 @@ export class Game {
                 cells[r][c].Override(cells[r + 1][c])
             }
         }
-        this.shuffleLine(cells[MAX_ROW_COUNT - 1])
+        Utils.ShuffleLine(cells[MAX_ROW_COUNT - 1])
         if (this.hold) {
             if (this.hold.Row === 0) {
                 this.hold = null
@@ -204,15 +207,6 @@ export class Game {
         this.drawAll()
     }
 
-    private shake() {
-        createjs.Tween.get(this.field)
-            .to({ x: FRAME_LEFT + 1, y: FRAME_TOP + 1, }, 50)
-            .to({ x: FRAME_LEFT - 1, y: FRAME_TOP - 1, }, 50)
-            .to({ x: FRAME_LEFT + 1, y: FRAME_TOP + 0, }, 50)
-            .to({ x: FRAME_LEFT + 0, y: FRAME_TOP + 1, }, 50)
-            .to({ x: FRAME_LEFT - 1, y: FRAME_TOP - 1, }, 50)
-            .to({ x: FRAME_LEFT + 0, y: FRAME_TOP + 0, }, 50)
-    }
 
     private gameOver() {
         this.isGameOver = true
@@ -223,16 +217,6 @@ export class Game {
     //#endregion
 
     //#region Util
-
-    private getTopRowNumber() {
-        let cells = this.getCells()
-        for (let r = 0; r < MAX_ROW_COUNT; r++) {
-            if (cells[r][0].State !== State.Delete) {
-                return r
-            }
-        }
-        return MAX_ROW_COUNT - 1
-    }
 
     private getCells(): Cell[][] {
         let cells: Cell[][] = []
@@ -248,27 +232,9 @@ export class Game {
         return cells
     }
 
-    private shuffleLine(line: Cell[]) {
-        for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-            let color: Color = Math.floor(Math.random() * 3)
-            let suit: Suit = Math.floor(Math.random() * 4)
-            line[c].Color = color
-            line[c].Suit = suit
-        }
-    }
-    private getCellArray(): Cell[] {
-        let cells = this.getCells()
-        let cellArray: Cell[] = []
-        for (let r = 0; r < MAX_ROW_COUNT; r++) {
-            for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-                cellArray.push(cells[r][c])
-            }
-        }
-        return cellArray
-    }
     private decrementLife() {
         let def = false
-        this.getCellArray().forEach(cell => {
+        Utils.GetCellArray(this.getCells()).forEach(cell => {
             if (cell.State === State.Flash) {
                 cell.Life--;
                 if (cell.Life <= 0) {
@@ -326,7 +292,7 @@ export class Game {
     }
 
     private drawAll() {
-        this.getCellArray().forEach(cell => {
+        Utils.GetCellArray(this.getCells()).forEach(cell => {
             cell.Draw()
         });
     }
@@ -345,8 +311,6 @@ export class Game {
             }
             this.swap(target)
         }
-
-
     }
 
     //#endregion

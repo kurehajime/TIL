@@ -37,6 +37,9 @@ export class Cell extends createjs.Container {
             case Suit.South:
                 suit = "南"
                 break;
+            case Suit.Wild:
+                suit = "＊"
+                break;
             default:
                 break;
         }
@@ -49,6 +52,9 @@ export class Cell extends createjs.Container {
                 break;
             case Color.Blue:
                 color = "DarkBlue"
+                break;
+            case Color.Rainbow:
+                color = "Black"
                 break;
             default:
                 break;

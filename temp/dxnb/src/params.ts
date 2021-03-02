@@ -3,12 +3,14 @@ export enum Suit {
     East,
     West,
     South,
+    Wild,
 }
 
 export enum Color {
     Red,
     Green,
     Blue,
+    Rainbow,
 }
 
 export enum State {
