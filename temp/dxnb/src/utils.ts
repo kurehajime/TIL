@@ -7,17 +7,17 @@ import { Cell } from "./cell";
 export class Utils {
 
     // Suitの消去判定
-    public static CheckSuit(row: Cell[]): [boolean, Suit] {
+    public static CheckSuit(row: Cell[]): boolean {
         let min = Math.min.apply(null, row.filter(x => x.Suit !== Suit.Wild).map(x => x.Suit)) as Suit
         let max = Math.max.apply(null, row.filter(x => x.Suit !== Suit.Wild).map(x => x.Suit)) as Suit
-        return [min === max, min]
+        return min === null || min === max
     }
 
     // Colorの消去判定
-    public static CheckColor(row: Cell[]): [boolean, Color] {
+    public static CheckColor(row: Cell[]): boolean {
         let min = Math.min.apply(null, row.filter(x => x.Suit !== Suit.Wild).map(x => x.Color)) as Color
         let max = Math.max.apply(null, row.filter(x => x.Color !== Color.Rainbow).map(x => x.Color)) as Color
-        return [min === max, min]
+        return min === null || min === max
     }
 
     // 列をシャッフル
@@ -27,15 +27,26 @@ export class Utils {
             let suit: Suit = Math.floor(Math.random() * 4)
             line[c].Color = color
             line[c].Suit = suit
+            Utils.ChangeWild(line[c])
+        }
+    }
+    public static ChangeWild(cell: Cell) {
+        let rand = Math.random()
+        if (rand < 0.1) {
+            cell.Suit = Suit.Wild
+            cell.Color = Color.Rainbow
+            cell.Draw()
         }
     }
 
     // 一番上の行を返す
     public static GetTopRowNumber(cells: Cell[][]) {
+        let rtn = 0
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
             if (cells[r][0].State !== State.Delete) {
-                return r
+                return rtn
             }
+            rtn = r
         }
         return MAX_ROW_COUNT - 1
     }
@@ -54,20 +65,20 @@ export class Utils {
     // ボーナスブロックに変換
     public static ChangeBlock(cells: Cell[][], suit: Suit, color: Color) {
         let cellArray = Utils.GetCellArray(cells)
-        if (suit) {
-            for (const cell of cellArray) {
+        if (suit !== null) {
+            for (const cell of cellArray.filter(x => x.Suit === suit)) {
                 cell.Suit = Suit.Wild
             }
         }
-        if (suit) {
-            for (const cell of cellArray) {
+        if (color !== null) {
+            for (const cell of cellArray.filter(x => x.Color === color)) {
                 cell.Color = Color.Rainbow
             }
         }
     }
     public static Defrag(cells: Cell[][]): number {
         let point = 0
-        for (let r1 = Utils.GetTopRowNumber(cells); r1 < MAX_ROW_COUNT; r1++) {
+        for (let r1 = Utils.GetTopRowNumber(cells); r1 <= MAX_ROW_COUNT - 1; r1++) {
             if (cells[r1][0].State === State.Delete) {
                 for (let r2 = r1; r2 > 0; r2--) {
                     for (let c = 0; c < MAX_COLUMN_COUNT; c++) {

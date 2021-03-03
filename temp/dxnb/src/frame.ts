@@ -25,7 +25,7 @@ export class Frame extends createjs.Container {
 
         let bottom = new createjs.Shape()
         bottom.graphics.beginFill(color)
-        bottom.graphics.drawRect(0, 50 * (MAX_ROW_COUNT - 2) + 40, 50 * (MAX_COLUMN_COUNT + 1), 50)
+        bottom.graphics.drawRect(0, 50 * (MAX_ROW_COUNT - 1), 50 * (MAX_COLUMN_COUNT + 1), 20)
         this.addChild(bottom)
 
         let left = new createjs.Shape()
@@ -37,6 +37,11 @@ export class Frame extends createjs.Container {
         right.graphics.beginFill(color)
         right.graphics.drawRect(25 + 5 + (50 * MAX_COLUMN_COUNT), 0, FRAME_LEFT, 50 * MAX_ROW_COUNT + 25)
         this.addChild(right)
+
+        let word = new createjs.Text("", "48px serif", "White");
+        word.textAlign = "center";
+        word.x = (50 * (MAX_COLUMN_COUNT + 1)) / 2
+        word.y = (50 * (MAX_ROW_COUNT - 1)) / 2
 
 
     }

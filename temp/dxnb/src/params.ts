@@ -24,7 +24,7 @@ export const MAX_COLUMN_COUNT = 5
 export const PROGRESS_SPAN = 300
 export const STEP_SPAN = 50
 
-export const FRAME_TOP = 25
+export const FRAME_TOP = 50
 export const FRAME_LEFT = 25
 export const END_OF_TIME = 60 * 1000
 

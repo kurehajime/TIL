@@ -9,6 +9,7 @@ import { Cover } from "./cover";
 import { Score } from "./score";
 import { Utils } from "./utils";
 import { EventManager } from "./eventManager";
+import { UpButton } from "./up";
 
 export class Game {
     private stage: createjs.Stage
@@ -18,16 +19,17 @@ export class Game {
     private progressBySpeed = 0
     private step = 0
     private stepIncrement: boolean = false
+    private time = 0
     private stopTime = 0
     private field: createjs.Container
     private shadow: Shadow
     private cover: Cover
     private score: Score
+    private upButton: UpButton
+
     private point: number = 0
     private isGameOver: boolean = false
     private startTime: number = 0
-    private bonusSuit: Suit = null
-    private bonusColor: Color = null
 
 
     private soundSource = [
@@ -43,6 +45,9 @@ export class Game {
 
     public Start() {
         this.initDraw()
+        this.upButton.addEventListener("mousedown", () => {
+            this.up()
+        })
 
         // 音声読み込み
         createjs.Sound.addEventListener("fileload", (event: any) => {
@@ -77,8 +82,13 @@ export class Game {
         if (this.startTime === 0) {
             this.startTime = e.time
         }
-        let time = e.time - this.startTime
-        let progressPer = time / END_OF_TIME
+        let delta = Math.max(e.delta - this.stopTime, 0)
+        this.stopTime = Math.max(this.stopTime - e.delta, 0)
+        this.time += delta
+        let progressPer = this.time / END_OF_TIME
+        if (delta === 0) {
+            return
+        }
 
         // ゲームオーバー判定
         if (progressPer > 1) {
@@ -87,11 +97,10 @@ export class Game {
 
 
         if (!this.isGameOver) {
-            let delta = Math.max(e.delta - this.stopTime, 0)
             let progress_span = PROGRESS_SPAN - (200 * progressPer)
-            this.stopTime = Math.max(this.stopTime - e.delta, 0)
             this.progress = this.progress + Math.round(delta)
             this.progressBySpeed = Math.round(this.progress / progress_span)
+
             this.stepIncrement = (this.step !== Math.floor(this.progressBySpeed / STEP_SPAN))
             this.step = Math.floor(this.progressBySpeed / STEP_SPAN)
             if (this.stepIncrement) {
@@ -107,7 +116,7 @@ export class Game {
 
     private draw(e: createjs.TickerEvent) {
         // せり上げる
-        this.field.y = FRAME_TOP - (this.progressBySpeed % STEP_SPAN)
+        this.field.y = - (this.progressBySpeed % STEP_SPAN)
         if (this.shadow.IsLive) {
             this.shadow.Hue = this.progress
         }
@@ -122,14 +131,15 @@ export class Game {
     private check() {
         let cells = this.getCells()
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
-            let [suitBool, suit] = Utils.CheckSuit(cells[r])
-            let [colorBool, color] = Utils.CheckColor(cells[r])
+            let suitBool = Utils.CheckSuit(cells[r])
+            let colorBool = Utils.CheckColor(cells[r])
             if (suitBool || colorBool) {
                 if (cells[r][0].State === State.Live) {
                     cells[r].forEach(x => {
                         x.State = State.Flash
                     })
-                    this.stopTime += 4000
+                    this.stopTime += (MAX_ROW_COUNT - Utils.GetTopRowNumber(this.getCells()) - 2) * 1000
+
                     let row = cells[r]
                     this.eventManager.SetEvent(500, () => {
                         row.forEach(x => {
@@ -137,19 +147,6 @@ export class Game {
                         })
                         this.defrag()
                     })
-
-                    //ボーナスブロックに変える 
-                    if (suitBool && this.bonusSuit === suit) {
-                        Utils.ChangeBlock(this.getCells(), this.bonusSuit, null)
-                        this.eventManager.SetEvent(500, () => {
-                            this.check()
-                        })
-                    }
-                    if (colorBool && this.bonusColor === color) {
-                        this.eventManager.SetEvent(500, () => {
-                            this.check()
-                        })
-                    }
                 }
 
             }
@@ -164,8 +161,8 @@ export class Game {
             this.point += point
             this.sounds["break"]?.play()
             Utils.Shake(this.field)
-            this.drawAll()
         }
+        this.drawAll()
     }
 
     // ブロックの繰り上げ
@@ -268,12 +265,13 @@ export class Game {
         field.name = "field"
         this.field = field
         this.field.x = FRAME_LEFT
-        this.field.y = FRAME_TOP
+        this.field.y = 0
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
             for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
                 let color: Color = Math.floor(Math.random() * 3)
                 let suit: Suit = Math.floor(Math.random() * 4)
                 let cell = new Cell(suit, color)
+                Utils.ChangeWild(cell)
                 cell.Row = r
                 cell.Column = c
                 cell.x = c * 50
@@ -292,6 +290,8 @@ export class Game {
 
         this.cover = new Cover()
         this.score = new Score()
+        this.upButton = new UpButton()
+        this.stage.addChild(this.upButton)
         this.stage.addChild(field)
         this.stage.addChild(new Frame())
         this.stage.addChild(this.cover)
