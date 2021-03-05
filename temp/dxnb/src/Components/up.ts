@@ -1,7 +1,7 @@
 import {
     Suit, Color, State
     , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN, FRAME_TOP, FRAME_LEFT
-} from "./params";
+} from "../params";
 export class UpButton extends createjs.Container {
     public constructor() {
         super()
@@ -11,7 +11,7 @@ export class UpButton extends createjs.Container {
         this.removeAllChildren()
 
         let color = "black"
-        let x = (50 * (MAX_COLUMN_COUNT + 1)) / 2
+        let x = 12 + (50 * (MAX_COLUMN_COUNT + 1)) / 2
         let y = (50 * (MAX_ROW_COUNT - 2)) / 2
 
         let cover = new createjs.Shape()
@@ -22,7 +22,7 @@ export class UpButton extends createjs.Container {
         let word = new createjs.Text("↑", "300px serif", "White");
         word.textAlign = "center";
         word.x = x
-        word.y = y - 100
+        word.y = y - 115
 
         this.addChild(cover)
         this.addChild(word)

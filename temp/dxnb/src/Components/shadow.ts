@@ -1,4 +1,4 @@
-import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT } from "./params";
+import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT } from "../params";
 export class Shadow extends createjs.Container {
     private _isLive = false
     private shape: createjs.Shape

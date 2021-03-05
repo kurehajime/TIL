@@ -2,14 +2,16 @@ import {
     Suit, Color, State
     , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN, FRAME_TOP, FRAME_LEFT, END_OF_TIME
 } from "./params";
-import { Cell } from "./cell";
-import { Frame } from "./frame";
-import { Shadow } from "./shadow";
-import { Cover } from "./cover";
-import { Score } from "./score";
+import { Cell } from "./Components/cell";
+import { Frame } from "./Components/frame";
+import { Shadow } from "./Components/shadow";
+import { Cover } from "./Components/cover";
+import { Score } from "./Components/score";
 import { Utils } from "./utils";
 import { EventManager } from "./eventManager";
-import { UpButton } from "./up";
+import { UpButton } from "./Components/up";
+import { LeftPoint } from "./Components/leftPoint";
+import { Bg } from "./Components/bg";
 
 export class Game {
     private stage: createjs.Stage
@@ -26,6 +28,7 @@ export class Game {
     private cover: Cover
     private score: Score
     private upButton: UpButton
+    private leftPoint: LeftPoint
 
     private point: number = 0
     private isGameOver: boolean = false
@@ -73,7 +76,7 @@ export class Game {
     private handleTick(e: createjs.TickerEvent) {
         this.update(e)
         this.eventManager.Tick(e.time)
-        this.draw(e)
+        this.drawStage(e)
     }
 
     private update(e: createjs.TickerEvent) {
@@ -105,20 +108,22 @@ export class Game {
             this.step = Math.floor(this.progressBySpeed / STEP_SPAN)
             if (this.stepIncrement) {
                 this.up()
-            }
-
-            // ゲームオーバー判定
-            if (Utils.GetTopRowNumber(this.getCells()) === 0) {
-                this.gameOver()
+                this.leftPoint.Draw()
             }
         }
     }
 
-    private draw(e: createjs.TickerEvent) {
+    private drawStage(e: createjs.TickerEvent) {
         // せり上げる
         this.field.y = - (this.progressBySpeed % STEP_SPAN)
+        this.leftPoint.y = - (this.progressBySpeed % STEP_SPAN)
         if (this.shadow.IsLive) {
             this.shadow.Hue = this.progress
+        }
+
+        // ゲームオーバー判定
+        if (this.checkGameOver()) {
+            this.gameOver()
         }
         this.stage.update()
     }
@@ -138,6 +143,7 @@ export class Game {
                     cells[r].forEach(x => {
                         x.State = State.Flash
                     })
+                    this.point += 1
                     this.stopTime += (MAX_ROW_COUNT - Utils.GetTopRowNumber(this.getCells()) - 2) * 1000
 
                     let row = cells[r]
@@ -158,7 +164,6 @@ export class Game {
     private defrag() {
         let point = Utils.Defrag(this.getCells())
         if (point > 0) {
-            this.point += point
             this.sounds["break"]?.play()
             Utils.Shake(this.field)
         }
@@ -181,6 +186,7 @@ export class Game {
                 this.hold = cells[this.hold.Row - 1][this.hold.Column]
             }
         }
+        this.leftPoint.Increment()
         this.drawAll()
     }
 
@@ -255,6 +261,25 @@ export class Game {
         return cells
     }
 
+    private checkGameOver(): boolean {
+        let cells = this.getCells()
+        let topCell: Cell = null
+        for (let r = 0; r < 2; r++) {
+            if (cells[r][0].State === State.Live) {
+                topCell = cells[r][0]
+                break
+            }
+        }
+        if (topCell !== null) {
+            var point = topCell.localToGlobal(0, 0)
+            if (point.y < FRAME_TOP) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     //#endregion
 
     //#region Draw
@@ -290,10 +315,13 @@ export class Game {
 
         this.cover = new Cover()
         this.score = new Score()
+        this.leftPoint = new LeftPoint()
         this.upButton = new UpButton()
+        this.stage.addChild(new Bg())
         this.stage.addChild(this.upButton)
         this.stage.addChild(field)
         this.stage.addChild(new Frame())
+        this.stage.addChild(this.leftPoint)
         this.stage.addChild(this.cover)
         this.stage.addChild(this.score)
         this.drawAll()

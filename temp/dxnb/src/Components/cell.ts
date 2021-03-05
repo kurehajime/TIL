@@ -1,4 +1,4 @@
-import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT, COLOR_RED, COLOR_GREEN, COLOR_BLUE } from "./params";
+import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT, COLOR_RED, COLOR_YELLOW, COLOR_BLUE } from "../params";
 
 export class Cell extends createjs.Container {
     public Row: number
@@ -47,8 +47,8 @@ export class Cell extends createjs.Container {
             case Color.Red:
                 color = COLOR_RED
                 break;
-            case Color.Green:
-                color = COLOR_GREEN
+            case Color.Yellow:
+                color = COLOR_YELLOW
                 break;
             case Color.Blue:
                 color = COLOR_BLUE
@@ -75,8 +75,8 @@ export class Cell extends createjs.Container {
             shape1.shadow = shadow;
         }
 
-        let foreColor = this.Color !== Color.Rainbow ? "White" : "Black"
-        let word = new createjs.Text(suit, "24px serif", foreColor);
+        let foreColor = "Black"
+        let word = new createjs.Text(suit, "bold 24px serif", foreColor);
         word.textAlign = "center";
         word.x = 27
         word.y = 15

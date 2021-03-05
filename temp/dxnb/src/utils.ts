@@ -2,7 +2,7 @@ import {
     Suit, Color, State
     , MAX_ROW_COUNT, MAX_COLUMN_COUNT, PROGRESS_SPAN, STEP_SPAN, FRAME_TOP, FRAME_LEFT, END_OF_TIME
 } from "./params";
-import { Cell } from "./cell";
+import { Cell } from "./Components/cell";
 
 export class Utils {
 
