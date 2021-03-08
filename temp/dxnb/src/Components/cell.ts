@@ -68,10 +68,14 @@ export class Cell extends createjs.Container {
             let ratios = [0, 0.2, 0.4, 0.6, 0.8, 1];
             shape1 = new createjs.Shape(new createjs.Graphics().beginLinearGradientFill(colors, ratios, 0, 0, 0, 50))
         }
+        if (this.IsHold) {
+            shape1.graphics.beginStroke("#FFFFFF77");
+            shape1.graphics.setStrokeStyle(3);
+        }
 
         shape1.graphics.drawRoundRect(5, 5, 45, 45, 5)
         if (this.IsHold) {
-            var shadow = new createjs.Shadow("#ffff00", 0, 0, 15);
+            var shadow = new createjs.Shadow("#ffffff", 0, 0, 15);
             shape1.shadow = shadow;
         }
 

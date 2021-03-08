@@ -117,10 +117,6 @@ export class Game {
         // せり上げる
         this.field.y = - (this.progressBySpeed % STEP_SPAN)
         this.leftPoint.y = - (this.progressBySpeed % STEP_SPAN)
-        if (this.shadow.IsLive) {
-            this.shadow.Hue = this.progress
-        }
-
         // ゲームオーバー判定
         if (this.checkGameOver()) {
             this.gameOver()
@@ -215,7 +211,6 @@ export class Game {
                     this.shadow.IsLive = true
                     this.shadow.x = this.hold.x
                     this.shadow.y = this.hold.y
-                    this.shadow.Hue = 0
                     this.eventManager.SetEvent(300, () => {
                         this.shadow.IsLive = false
                     })

@@ -1,8 +1,6 @@
 import { Suit, Color, State, MAX_ROW_COUNT, MAX_COLUMN_COUNT } from "../params";
 export class Shadow extends createjs.Container {
     private _isLive = false
-    private shape: createjs.Shape
-    private _hue = 0
 
     public set IsLive(value: boolean) {
         this._isLive = value;
@@ -12,12 +10,6 @@ export class Shadow extends createjs.Container {
         return this._isLive
     }
 
-    public set Hue(value: number) {
-        this._hue = value;
-        if (this._isLive) {
-            this.shape.graphics.beginFill(createjs.Graphics.getHSL(this._hue, 50, 50))
-        }
-    }
     public constructor() {
         super()
         this.Draw()
@@ -27,10 +19,9 @@ export class Shadow extends createjs.Container {
         this.removeAllChildren()
         if (this._isLive) {
             let shape1 = new createjs.Shape()
-            shape1.graphics.beginFill(createjs.Graphics.getHSL(this._hue, 50, 50))
+            shape1.graphics.beginFill("White")
             shape1.graphics.drawRoundRect(5, 5, 45, 45, 5)
             shape1.alpha = 0.3
-            this.shape = shape1
             this.children.push(shape1)
         }
     }

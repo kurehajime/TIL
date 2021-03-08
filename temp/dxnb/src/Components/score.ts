@@ -15,7 +15,7 @@ export class Score extends createjs.Container {
         let cover = new createjs.Shape()
         cover.graphics.beginFill(color)
         cover.graphics.drawRect(0, 0, 300, 535)
-        cover.alpha = 0.5
+        cover.alpha = 0.7
 
         let word = new createjs.Text("" + point, "48px serif", "White");
         word.textAlign = "center";
