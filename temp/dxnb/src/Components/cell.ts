@@ -90,8 +90,22 @@ export class Cell extends createjs.Container {
             this.alpha = 1
         }
 
+        let markStr = ""
+        if (this.State === State.PreLock) {
+            markStr = "○"
+        }
+
+        if (this.State === State.Lock) {
+            markStr = "●"
+        }
+        let mark = new createjs.Text(markStr, "bold 12px serif", foreColor);
+        mark.textAlign = "center";
+        mark.x = 40
+        mark.y = 30
+
         this.addChild(shape1)
         this.addChild(word)
+        this.addChild(mark)
     }
     public Override(cell: Cell) {
         this.Suit = cell.Suit

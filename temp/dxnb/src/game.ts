@@ -64,7 +64,7 @@ export class Game {
             createjs.Ticker.addEventListener("tick", (e: createjs.TickerEvent) => { this.handleTick(e) });
             this.sounds["bgm"]?.setLoop(-1)
             this.sounds["bgm"]?.setVolume(0.3)
-            this.sounds["bgm"]?.play()
+            //this.sounds["bgm"]?.play()
             this.cover.UnDraw()
             this.cover.removeAllEventListeners()
         });
@@ -93,14 +93,14 @@ export class Game {
             return
         }
 
-        // ゲームオーバー判定
-        if (progressPer > 1) {
-            this.gameOver()
-        }
+        // // ゲームオーバー判定
+        // if (progressPer > 1) {
+        //     this.gameOver()
+        // }
 
 
         if (!this.isGameOver) {
-            let progress_span = PROGRESS_SPAN - (200 * progressPer)
+            let progress_span = Math.max(10, PROGRESS_SPAN - (200 * progressPer))
             this.progress = this.progress + Math.round(delta)
             this.progressBySpeed = Math.round(this.progress / progress_span)
 
@@ -135,22 +135,24 @@ export class Game {
             let suitBool = Utils.CheckSuit(cells[r])
             let colorBool = Utils.CheckColor(cells[r])
             if (suitBool || colorBool) {
-                if (cells[r][0].State === State.Live) {
+                if (cells[r][0].State !== State.Flash && cells[r][0].State !== State.Delete) {
                     cells[r].forEach(x => {
                         x.State = State.Flash
                     })
                     this.point += 1
-                    this.stopTime += (MAX_ROW_COUNT - Utils.GetTopRowNumber(this.getCells()) - 2) * 1000
+                    this.stopTime += (MAX_ROW_COUNT - Utils.GetTopRowNumber(this.getCells()) - 2) * 500
 
                     let row = cells[r]
+                    let suit = suitBool ? row[0].Suit : null
+                    let color = colorBool ? row[0].Color : null
                     this.eventManager.SetEvent(500, () => {
+                        this.clearLock(cells, r, suit, color)
                         row.forEach(x => {
                             x.State = State.Delete
                         })
                         this.defrag()
                     })
                 }
-
             }
         }
         this.drawAll()
@@ -164,6 +166,17 @@ export class Game {
             Utils.Shake(this.field)
         }
         this.drawAll()
+    }
+    private clearLock(cells: Cell[][], lineNumber: number, suit: Suit, color: Color) {
+        Utils.GetCellArray(cells).forEach(x => {
+            if (x.Suit === suit || x.Color === color) {
+                if (x.State === State.Lock) {
+                    x.State = State.PreLock
+                } else if (x.State === State.PreLock) {
+                    x.State = State.Live
+                }
+            }
+        })
     }
 
     // ブロックの繰り上げ
@@ -194,18 +207,30 @@ export class Game {
                 x.Draw()
             }
         })
-        if (target.State !== State.Live) {
+        if (target.State !== State.Live && target.State !== State.PreLock) {
             return
         }
+
         if (this.hold) {
+            if (this.hold.State !== State.Live && this.hold.State !== State.PreLock) {
+                return
+            }
             if (this.hold !== target) {
                 if (this.hold.Color === target.Color || this.hold.Suit === target.Suit) {
                     let color = target.Color
                     let suit = target.Suit
+                    let state = target.State
+
                     target.Color = this.hold.Color
                     target.Suit = this.hold.Suit
+                    target.State = this.hold.State
+
                     this.hold.Color = color
                     this.hold.Suit = suit
+                    this.hold.State = state
+
+                    target.State = target.State === State.PreLock ? State.Lock : State.PreLock
+                    this.hold.State = this.hold.State === State.PreLock ? State.Lock : State.PreLock
 
                     // 影
                     this.shadow.IsLive = true
@@ -291,7 +316,7 @@ export class Game {
                 let color: Color = Math.floor(Math.random() * 3)
                 let suit: Suit = Math.floor(Math.random() * 4)
                 let cell = new Cell(suit, color)
-                Utils.ChangeWild(cell)
+                //Utils.ChangeWild(cell)
                 cell.Row = r
                 cell.Column = c
                 cell.x = c * 50
@@ -339,7 +364,7 @@ export class Game {
             if (this.sounds["bgm"]?.getPosition() === 0) {
                 this.sounds["bgm"]?.setVolume(0.3)
                 this.sounds["bgm"]?.setLoop(-1)
-                this.sounds["bgm"]?.play()
+                //this.sounds["bgm"]?.play()
             }
             this.swap(target)
         }

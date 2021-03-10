@@ -27,7 +27,8 @@ export class Utils {
             let suit: Suit = Math.floor(Math.random() * 4)
             line[c].Color = color
             line[c].Suit = suit
-            Utils.ChangeWild(line[c])
+            line[c].State = State.Live
+            // Utils.ChangeWild(line[c])
         }
     }
     public static ChangeWild(cell: Cell) {
