@@ -100,7 +100,7 @@ export class Game {
 
 
         if (!this.isGameOver) {
-            let progress_span = Math.max(10, PROGRESS_SPAN - (200 * progressPer))
+            let progress_span = Math.max(10, PROGRESS_SPAN - (PROGRESS_SPAN * progressPer))
             this.progress = this.progress + Math.round(delta)
             this.progressBySpeed = Math.round(this.progress / progress_span)
 
@@ -313,7 +313,7 @@ export class Game {
         this.field.y = 0
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
             for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-                let color: Color = Math.floor(Math.random() * 3)
+                let color: Color = Math.floor(Math.random() * 4)
                 let suit: Suit = Math.floor(Math.random() * 4)
                 let cell = new Cell(suit, color)
                 //Utils.ChangeWild(cell)
