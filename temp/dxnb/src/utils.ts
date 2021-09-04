@@ -23,12 +23,12 @@ export class Utils {
     // 列をシャッフル
     public static ShuffleLine(line: Cell[]) {
         for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-            let color: Color = Math.floor(Math.random() * 4)
-            let suit: Suit = Math.floor(Math.random() * 4)
+            let color: Color = Math.floor(Math.random() * 3)
+            let suit: Suit = Math.floor(Math.random() * 3)
             line[c].Color = color
             line[c].Suit = suit
             line[c].State = State.Live
-            // Utils.ChangeWild(line[c])
+            //Utils.ChangeWild(line[c])
         }
     }
     public static ChangeWild(cell: Cell) {

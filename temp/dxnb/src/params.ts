@@ -8,9 +8,9 @@ export enum Suit {
 
 export enum Color {
     Red,
-    White,
     Blue,
     Green,
+    White,
     Rainbow,
 }
 

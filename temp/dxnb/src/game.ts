@@ -313,8 +313,8 @@ export class Game {
         this.field.y = 0
         for (let r = 0; r < MAX_ROW_COUNT; r++) {
             for (let c = 0; c < MAX_COLUMN_COUNT; c++) {
-                let color: Color = Math.floor(Math.random() * 4)
-                let suit: Suit = Math.floor(Math.random() * 4)
+                let color: Color = Math.floor(Math.random() * 3)
+                let suit: Suit = Math.floor(Math.random() * 3)
                 let cell = new Cell(suit, color)
                 //Utils.ChangeWild(cell)
                 cell.Row = r
