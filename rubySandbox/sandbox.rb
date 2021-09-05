@@ -1,4 +1,4 @@
-require "./file_saver.rb"
+require "./classifile.rb"
 proc = Proc.new do
   dir "foo" do
     assert 1+1==2
@@ -39,6 +39,6 @@ proc = Proc.new do
 end
 
 
-fs = FileSaver.new
+fs = Classifile.new
 target_file = TargetFile.new("C:/temp/test.txt")
 fs.run(target_file,&proc)

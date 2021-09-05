@@ -5,7 +5,7 @@ end
 class NoGotcha < StandardError
 end
 
-class FileSaver
+class Classifile
   attr_reader :file
   def run(target_file, &block)
     raise "TypeError" unless target_file.is_a?(TargetFile)
