@@ -47,12 +47,13 @@ class State
   end
 
   def assert(bool)
-    is bool
-  end
-
-  def is(bool)
     raise NoGotcha.new unless bool
   end
+
+  def assert_not(bool)
+    raise NoGotcha.new if bool
+  end
+
 
   def dir(dir_name, &block)
     child = self.dup
